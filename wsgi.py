@@ -5,7 +5,20 @@ from flask.cli import with_appcontext, AppGroup
 from App.database import db, get_migrate
 from App.models import User, Course, Staff
 from App.main import create_app
-from App.controllers import (create_user, get_all_users_json, get_all_users, initialize, create_course, create_staff, assign_staff_to_course, view_course_details)
+
+#from App.controllers import (create_user, get_all_users_json, get_all_users, initialize, create_course, create_staff, assign_staff_to_course, view_course_details)
+
+from App.controllers.user import create_user, get_all_users_json, get_all_users
+
+#Import initializing controller
+from App.controllers.initialize import initialize
+
+# Import course controller
+from App.controllers.course import create_course, view_course_details
+
+# Import staff controller
+from App.controllers.staff import create_staff, assign_staff_to_course
+
 
 # This commands file allows you to create convenient CLI commands for testing controllers
 app = create_app()
