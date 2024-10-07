@@ -8,7 +8,6 @@ from App.main import create_app
 from App.controllers import (create_user, get_all_users_json, get_all_users, initialize, create_course, create_staff, assign_staff_to_course, view_course_details)
 
 # This commands file allows you to create convenient CLI commands for testing controllers
-
 app = create_app()
 migrate = get_migrate(app)
 
