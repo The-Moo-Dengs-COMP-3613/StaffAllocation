@@ -3,10 +3,8 @@ from flask import Flask
 from flask.cli import with_appcontext, AppGroup
 
 from App.database import db, get_migrate
-from App.models import User, Course, Staff
+from App.models import TA, Lecturer, Tutor, User, Course, Staff
 from App.main import create_app
-
-#from App.controllers import (create_user, get_all_users_json, get_all_users, initialize, create_course, create_staff, assign_staff_to_course, view_course_details)
 
 from App.controllers.user import create_user, get_all_users_json, get_all_users
 
@@ -24,32 +22,36 @@ from App.controllers.staff import create_staff, assign_staff_to_course
 app = create_app()
 migrate = get_migrate(app)
 
+
+
+
+
 # This command creates and initializes the database
 @app.cli.command("init", help="Creates and initializes the database")
 def init():
     initialize()
 
-    # Mock data: Create staff entries
+    # Mock data: Create staff entries using Lecturer, Tutor, and TA models
     # Lecturers
-    lecturer1 = Staff(title="Dr.", firstName="Jane", lastName="Villanueva", role="lecturer")
-    lecturer2 = Staff(title="Prof.", firstName="Jackson", lastName="Duke", role="lecturer")
-    lecturer3 = Staff(title="Dr.", firstName="Emily", lastName="Cooper", role="lecturer")
-    lecturer4 = Staff(title="Prof.", firstName="Tony", lastName="Stark", role="lecturer")
-    lecturer5 = Staff(title="Dr.", firstName="Camille", lastName="Wilson", role="lecturer")
+    lecturer1 = Lecturer(title="Dr.", firstName="Jane", lastName="Villanueva")
+    lecturer2 = Lecturer(title="Prof.", firstName="Jackson", lastName="Duke")
+    lecturer3 = Lecturer(title="Dr.", firstName="Emily", lastName="Cooper")
+    lecturer4 = Lecturer(title="Prof.", firstName="Tony", lastName="Stark")
+    lecturer5 = Lecturer(title="Dr.", firstName="Camille", lastName="Wilson")
 
     # Tutors
-    tutor1 = Staff(title="Mr.", firstName="Robert", lastName="Pattinson", role="tutor")
-    tutor2 = Staff(title="Ms.", firstName="Lindsay", lastName="Lohan", role="tutor")
-    tutor3 = Staff(title="Mr.", firstName="James", lastName="Charles", role="tutor")
-    tutor4 = Staff(title="Ms.", firstName="Steven", lastName="Harrison", role="tutor")
-    tutor5 = Staff(title="Mr.", firstName="Kevin", lastName="Hart", role="tutor")
+    tutor1 = Tutor(title="Mr.", firstName="Robert", lastName="Pattinson")
+    tutor2 = Tutor(title="Ms.", firstName="Lindsay", lastName="Lohan")
+    tutor3 = Tutor(title="Mr.", firstName="James", lastName="Charles")
+    tutor4 = Tutor(title="Ms.", firstName="Steven", lastName="Harrison")
+    tutor5 = Tutor(title="Mr.", firstName="Kevin", lastName="Hart")
 
     # TAs
-    ta1 = Staff(title="Mr.", firstName="Mark", lastName="Taylor", role="ta")
-    ta2 = Staff(title="Ms.", firstName="Rachel", lastName="Adams", role="ta")
-    ta3 = Staff(title="Mr.", firstName="Michael", lastName="Jordan", role="ta")
-    ta4 = Staff(title="Ms.", firstName="Jessica", lastName="Alba", role="ta")
-    ta5 = Staff(title="Mr.", firstName="Daniel", lastName="Radcliffe", role="ta")
+    ta1 = TA(title="Mr.", firstName="Mark", lastName="Taylor")
+    ta2 = TA(title="Ms.", firstName="Rachel", lastName="Adams")
+    ta3 = TA(title="Mr.", firstName="Michael", lastName="Jordan")
+    ta4 = TA(title="Ms.", firstName="Jessica", lastName="Alba")
+    ta5 = TA(title="Mr.", firstName="Daniel", lastName="Radcliffe")
 
     # Add all staff to the database
     db.session.add_all([
@@ -59,7 +61,7 @@ def init():
     ])
     db.session.commit()
 
-    # Create mock courses, linking them with actual Staff objects
+    # Create mock courses, linking them with actual Lecturer, Tutor, and TA objects
     course1 = Course(courseCode="COMP101", courseName="Introduction to Computer Science", lecturer=lecturer1, tutor=tutor1, ta=ta1)
     course2 = Course(courseCode="MATH102", courseName="Discrete Maths", lecturer=lecturer2, tutor=tutor2, ta=ta2)
     course3 = Course(courseCode="ELEC201", courseName="Electronics", lecturer=lecturer3, tutor=tutor3, ta=ta3)
@@ -71,6 +73,10 @@ def init():
     db.session.commit()
 
     print('Database initialized with mock data')
+
+
+
+
 
 '''
 User Commands
@@ -99,6 +105,8 @@ Course Commands
 '''
 course_cli = AppGroup('course', help='Course object commands')
 
+
+
 @course_cli.command("create", help="Creates a course")
 @click.argument("course_code")
 @click.argument("course_name")
@@ -109,9 +117,9 @@ def create_course_command(course_code, course_name, lecturer_id, tutor_id, ta_id
     course = create_course(course_code, course_name, lecturer_id, tutor_id, ta_id)
 
     # Fetch and display staff names
-    lecturer = Staff.query.get(lecturer_id)
-    tutor = Staff.query.get(tutor_id)
-    ta = Staff.query.get(ta_id)
+    lecturer = Lecturer.query.get(lecturer_id)
+    tutor = Tutor.query.get(tutor_id)
+    ta = TA.query.get(ta_id)
 
     lecturer_name = f"{lecturer.title} {lecturer.firstName} {lecturer.lastName}" if lecturer else "None"
     tutor_name = f"{tutor.title} {tutor.firstName} {tutor.lastName}" if tutor else "None"
@@ -121,6 +129,9 @@ def create_course_command(course_code, course_name, lecturer_id, tutor_id, ta_id
     print(f'Lecturer: {lecturer_name}')
     print(f'Tutor: {tutor_name}')
     print(f'Teaching Assistant: {ta_name}')
+
+
+
 
 @course_cli.command("assign", help="Assign staff to a course")
 @click.argument("course_code")
@@ -132,9 +143,9 @@ def assign_staff_command(course_code, lecturer_id=None, tutor_id=None, ta_id=Non
     if success:
         # Fetch and display staff names
         course = Course.query.filter_by(courseCode=course_code).first()
-        lecturer = Staff.query.get(course.lecturer_id)
-        tutor = Staff.query.get(course.tutor_id)
-        ta = Staff.query.get(course.ta_id)
+        lecturer = Lecturer.query.get(course.lecturer_id)
+        tutor = Tutor.query.get(course.tutor_id)
+        ta = TA.query.get(course.ta_id)
 
         lecturer_name = f"{lecturer.title} {lecturer.firstName} {lecturer.lastName}" if lecturer else "None"
         tutor_name = f"{tutor.title} {tutor.firstName} {tutor.lastName}" if tutor else "None"
@@ -146,6 +157,9 @@ def assign_staff_command(course_code, lecturer_id=None, tutor_id=None, ta_id=Non
         print(f'Teaching Assistant: {ta_name}')
     else:
         print(f'Course {course_code} not found!')
+
+
+
 
 @course_cli.command("view", help="View course details")
 @click.argument("course_code")

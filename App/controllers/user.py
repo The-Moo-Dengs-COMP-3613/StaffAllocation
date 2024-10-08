@@ -32,7 +32,7 @@ def update_user(id, username):
     return None
 
 
-# Functions for command logic
+# Functions for command logic - moved to separate controllers
 
 # def create_course(course_code, course_name, lecturer_id, tutor_id, ta_id):
 #     """Create a new course and add it to the database."""

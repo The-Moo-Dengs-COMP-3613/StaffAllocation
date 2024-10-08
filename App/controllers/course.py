@@ -1,32 +1,36 @@
-from App.models import User, Course, Staff
+from App.models import Course, Lecturer, Tutor, TA
 from App.database import db
 
+def create_course(course_code, course_name, lecturer_id=None, tutor_id=None, ta_id=None):
+    new_course = Course(courseCode=course_code, courseName=course_name)
+    
+    if lecturer_id:
+        lecturer = Lecturer.query.get(lecturer_id)
+        if lecturer:
+            new_course.lecturer = lecturer
+    
+    if tutor_id:
+        tutor = Tutor.query.get(tutor_id)
+        if tutor:
+            new_course.tutor = tutor
+    
+    if ta_id:
+        ta = TA.query.get(ta_id)
+        if ta:
+            new_course.ta = ta
 
-def create_course(course_code, course_name, lecturer_id, tutor_id, ta_id):
-    """Create a new course and add it to the database."""
-    new_course = Course(courseCode=course_code, courseName=course_name,
-                        lecturer_id=lecturer_id, tutor_id=tutor_id, ta_id=ta_id)
     db.session.add(new_course)
     db.session.commit()
     return new_course
 
-
 def view_course_details(course_code):
-    """Retrieve details for a specific course with staff names."""
     course = Course.query.filter_by(courseCode=course_code).first()
     if not course:
         return f'Course {course_code} not found.'
 
-
-    lecturer = Staff.query.get(course.lecturer_id)
-    tutor = Staff.query.get(course.tutor_id)
-    ta = Staff.query.get(course.ta_id)
-
-
-    lecturer_name = f"{lecturer.title} {lecturer.firstName} {lecturer.lastName}" if lecturer else "None"
-    tutor_name = f"{tutor.title} {tutor.firstName} {tutor.lastName}" if tutor else "None"
-    ta_name = f"{ta.title} {ta.firstName} {ta.lastName}" if ta else "None"
-
+    lecturer_name = course.lecturer.full_name() if course.lecturer else "None"
+    tutor_name = course.tutor.full_name() if course.tutor else "None"
+    ta_name = course.ta.full_name() if course.ta else "None"
 
     details = {
         "Course Code": course.courseCode,
@@ -35,5 +39,6 @@ def view_course_details(course_code):
         "Tutor": tutor_name,
         "Teaching Assistant": ta_name
     }
-   
+
     return details
+
