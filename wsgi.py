@@ -15,15 +15,12 @@ from App.controllers.initialize import initialize
 from App.controllers.course import create_course, view_course_details
 
 # Import staff controller
-from App.controllers.staff import create_staff, assign_staff_to_course
+from App.controllers.staff import create_lecturer, create_tutor, create_ta, assign_staff_to_course
 
 
 # This commands file allows you to create convenient CLI commands for testing controllers
 app = create_app()
 migrate = get_migrate(app)
-
-
-
 
 
 # This command creates and initializes the database
@@ -75,9 +72,6 @@ def init():
     print('Database initialized with mock data')
 
 
-
-
-
 '''
 User Commands
 '''
@@ -106,7 +100,6 @@ Course Commands
 course_cli = AppGroup('course', help='Course object commands')
 
 
-
 @course_cli.command("create", help="Creates a course")
 @click.argument("course_code")
 @click.argument("course_name")
@@ -114,49 +107,43 @@ course_cli = AppGroup('course', help='Course object commands')
 @click.argument("tutor_id")
 @click.argument("ta_id")
 def create_course_command(course_code, course_name, lecturer_id, tutor_id, ta_id):
-    course = create_course(course_code, course_name, lecturer_id, tutor_id, ta_id)
+    # Check for existing course
+    existing_course = Course.query.filter_by(courseCode=course_code).first()
+    if existing_course:
+        print(f'Error: A course with the code {course_code} already exists.')
+        return
 
-    # Fetch and display staff names
+    # Fetch staff members
     lecturer = Lecturer.query.get(lecturer_id)
     tutor = Tutor.query.get(tutor_id)
     ta = TA.query.get(ta_id)
 
-    lecturer_name = f"{lecturer.title} {lecturer.firstName} {lecturer.lastName}" if lecturer else "None"
-    tutor_name = f"{tutor.title} {tutor.firstName} {tutor.lastName}" if tutor else "None"
-    ta_name = f"{ta.title} {ta.firstName} {ta.lastName}" if ta else "None"
+    if not lecturer:
+        print(f'Error: Lecturer ID {lecturer_id} not found!')
+        return
+    if not tutor:
+        print(f'Error: Tutor ID {tutor_id} not found!')
+        return
+    if not ta:
+        print(f'Error: TA ID {ta_id} not found!')
+        return
+
+    # Create the course object
+    course = Course(courseCode=course_code, courseName=course_name, lecturer=lecturer, tutor=tutor, ta=ta)
+    
+    # Add the course to the session
+    db.session.add(course)
+    db.session.commit()  # Save changes to the database
+
+    lecturer_name = f"{lecturer.title} {lecturer.firstName} {lecturer.lastName}"
+    tutor_name = f"{tutor.title} {tutor.firstName} {tutor.lastName}"
+    ta_name = f"{ta.title} {ta.firstName} {ta.lastName}"
 
     print(f'Course {course.courseCode} created with:')
     print(f'Lecturer: {lecturer_name}')
     print(f'Tutor: {tutor_name}')
     print(f'Teaching Assistant: {ta_name}')
 
-
-
-
-@course_cli.command("assign", help="Assign staff to a course")
-@click.argument("course_code")
-@click.argument("lecturer_id", required=False)
-@click.argument("tutor_id", required=False)
-@click.argument("ta_id", required=False)
-def assign_staff_command(course_code, lecturer_id=None, tutor_id=None, ta_id=None):
-    success = assign_staff_to_course(course_code, lecturer_id, tutor_id, ta_id)
-    if success:
-        # Fetch and display staff names
-        course = Course.query.filter_by(courseCode=course_code).first()
-        lecturer = Lecturer.query.get(course.lecturer_id)
-        tutor = Tutor.query.get(course.tutor_id)
-        ta = TA.query.get(course.ta_id)
-
-        lecturer_name = f"{lecturer.title} {lecturer.firstName} {lecturer.lastName}" if lecturer else "None"
-        tutor_name = f"{tutor.title} {tutor.firstName} {tutor.lastName}" if tutor else "None"
-        ta_name = f"{ta.title} {ta.firstName} {ta.lastName}" if ta else "None"
-
-        print(f'Staff assigned to course {course_code} successfully!')
-        print(f'Lecturer: {lecturer_name}')
-        print(f'Tutor: {tutor_name}')
-        print(f'Teaching Assistant: {ta_name}')
-    else:
-        print(f'Course {course_code} not found!')
 
 
 
@@ -174,6 +161,9 @@ def view_course_command(course_code):
 
 app.cli.add_command(course_cli)
 
+
+
+
 '''
 Staff Commands
 '''
@@ -185,10 +175,99 @@ staff_cli = AppGroup('staff', help='Staff object commands')
 @click.argument("last_name")
 @click.argument("role")
 def create_staff_command(title, first_name, last_name, role):
-    staff = create_staff(title, first_name, last_name, role)
+    if role.lower() == "lecturer":
+        staff = create_lecturer(title, first_name, last_name)
+    elif role.lower() == "tutor":
+        staff = create_tutor(title, first_name, last_name)
+    elif role.lower() == "ta":
+        staff = create_ta(title, first_name, last_name)
+    else:
+        print(f"Role {role} not recognized. Please use 'lecturer', 'tutor', or 'ta'.")
+        return
     print(f'Staff member {staff.firstName} {staff.lastName} created!')
 
 app.cli.add_command(staff_cli)
+
+
+
+
+
+@staff_cli.command("assign", help="Assign staff to a course")
+@click.argument("course_code")
+@click.argument("lecturer_id", required=False)
+@click.argument("tutor_id", required=False)
+@click.argument("ta_id", required=False)
+def assign_staff_command(course_code, lecturer_id=None, tutor_id=None, ta_id=None):
+    # Fetch course by course_code
+    course = Course.query.filter_by(courseCode=course_code).first()
+    if not course:
+        print(f'Error: Course {course_code} not found!')
+        return
+
+    # Fetch and assign lecturer if provided
+    if lecturer_id:
+        lecturer = Lecturer.query.get(lecturer_id)
+        if not lecturer:
+            print(f'Error: Lecturer ID {lecturer_id} not found!')
+            return
+        course.lecturer = lecturer
+
+    # Fetch and assign tutor if provided
+    if tutor_id:
+        tutor = Tutor.query.get(tutor_id)
+        if not tutor:
+            print(f'Error: Tutor ID {tutor_id} not found!')
+            return
+        course.tutor = tutor
+
+    # Fetch and assign TA if provided
+    if ta_id:
+        ta = TA.query.get(ta_id)
+        if not ta:
+            print(f'Error: TA ID {ta_id} not found!')
+            return
+        course.ta = ta
+
+    db.session.commit()  # Save changes to the database
+
+    lecturer_name = course.lecturer.full_name() if course.lecturer else "None"
+    tutor_name = course.tutor.full_name() if course.tutor else "None"
+    ta_name = course.ta.full_name() if course.ta else "None"
+
+    print(f'Staff assigned to course {course_code} successfully!')
+    print(f'Lecturer: {lecturer_name}')
+    print(f'Tutor: {tutor_name}')
+    print(f'Teaching Assistant: {ta_name}')
+
+
+
+
+
+'''
+Commands to run to display ids for staff
+'''
+
+
+@staff_cli.command("list_lecturers", help="Lists all lecturers in the database")
+def list_lecturers_command():
+    lecturers = Lecturer.query.all()
+    for lecturer in lecturers:
+        print(f'Lecturer ID: {lecturer.id}, Name: {lecturer.full_name()}')
+
+@staff_cli.command("list_tutors", help="Lists all tutors in the database")
+def list_tutors_command():
+    tutors = Tutor.query.all()
+    for tutor in tutors:
+        print(f'Tutor ID: {tutor.id}, Name: {tutor.full_name()}')
+
+@staff_cli.command("list_tas", help="Lists all teaching assistants in the database")
+def list_tas_command():
+    tas = TA.query.all()
+    for ta in tas:
+        print(f'TA ID: {ta.id}, Name: {ta.full_name()}')
+
+
+
 
 '''
 Test Commands
@@ -199,10 +278,10 @@ test = AppGroup('test', help='Testing commands')
 @click.argument("type", default="all")
 def user_tests_command(type):
     if type == "unit":
-        sys.exit(pytest.main(["-k", "UserUnitTests"]))
+        sys.exit(pytest.main(["-k", "UserUnitTest", "-s"]))
     elif type == "int":
-        sys.exit(pytest.main(["-k", "UserIntegrationTests"]))
+        sys.exit(pytest.main(["-k", "UserIntegrationTest", "-s"]))
     else:
-        sys.exit(pytest.main(["-k", "App"]))
+        sys.exit(pytest.main(["-k", "App", "-s"]))
 
 app.cli.add_command(test)

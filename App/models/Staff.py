@@ -13,3 +13,33 @@ class Staff(db.Model):
     
     def full_name(self):
         return f"{self.title} {self.firstName} {self.lastName}"
+
+class Lecturer(Staff):
+    __tablename__ = 'lecturers'
+    id = db.Column(db.Integer, db.ForeignKey('staff.id'), primary_key=True)
+
+    def assign_to_course(self, course):
+        course.lecturer = self  
+
+
+class Tutor(Staff):
+    __tablename__ = 'tutors'
+    id = db.Column(db.Integer, db.ForeignKey('staff.id'), primary_key=True)
+
+    def assign_to_course(self, course):
+        course.tutor = self 
+
+
+class TA(Staff):
+    __tablename__ = 'tas'
+    id = db.Column(db.Integer, db.ForeignKey('staff.id'), primary_key=True)
+
+    def assign_to_course(self, course):
+        course.ta = self  
+
+
+
+def get_staff(cls, staff_id):
+        """Fetch staff by ID."""
+        return cls.query.get(staff_id)
+
