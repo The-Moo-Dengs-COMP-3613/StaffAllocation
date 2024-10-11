@@ -20,3 +20,4 @@ def get_course(cls, course_code):
         """Fetch course by course code."""
         return cls.query.filter_by(courseCode=course_code).first() 
 
+

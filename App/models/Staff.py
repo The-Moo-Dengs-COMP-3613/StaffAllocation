@@ -13,6 +13,11 @@ class Staff(db.Model):
     
     def full_name(self):
         return f"{self.title} {self.firstName} {self.lastName}"
+    
+    @classmethod
+    def get_staff(cls, staff_id):
+        """Fetch staff by ID."""
+        return cls.query.get(staff_id)
 
 class Lecturer(Staff):
     __tablename__ = 'lecturers'
@@ -42,4 +47,6 @@ class TA(Staff):
 def get_staff(cls, staff_id):
         """Fetch staff by ID."""
         return cls.query.get(staff_id)
+
+
 

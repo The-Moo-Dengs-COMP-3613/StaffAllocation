@@ -42,3 +42,7 @@ def view_course_details(course_code):
 
     return details
 
+
+def get_course(course_code):
+    """Fetch course by course code."""
+    return Course.query.filter_by(courseCode=course_code).first()

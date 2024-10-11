@@ -20,8 +20,6 @@ def create_ta(title, first_name, last_name):
     return new_ta
 
 
-
-
 def assign_staff_to_course(course_code, lecturer_id, tutor_id, ta_id):
     course = Course.query.filter_by(courseCode=course_code).first()
     
@@ -58,7 +56,9 @@ def assign_staff_to_course(course_code, lecturer_id, tutor_id, ta_id):
     return True  # Assignment successful
 
 
-
+def get_staff(cls, staff_id):
+    """Fetch staff by ID."""
+    return cls.query.get(staff_id)
 
 # def assign_staff_to_course(course_code, lecturer_id=None, tutor_id=None, ta_id=None):
 #     course = Course.query.filter_by(courseCode=course_code).first()
