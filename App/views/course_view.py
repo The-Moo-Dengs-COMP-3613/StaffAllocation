@@ -1,9 +1,11 @@
-from flask import request, jsonify
+from flask import Blueprint, request, jsonify
 from App.database import db
-from App.models import Course, Lecturer, Tutor, TA
+from App.models import Course
 from flask_jwt_extended import jwt_required
 
-@app.route('/courses', methods=['POST'])
+course_bp = Blueprint('courses', __name__)
+
+@course_bp.route('/courses', methods=['POST'])
 @jwt_required()
 def create_course():
     data = request.get_json()
@@ -34,9 +36,9 @@ def create_course():
     db.session.add(course)
     db.session.commit()
     
-    return jsonify({"message": "Course created successfully."}), 201
+    return jsonify({"message": "Course created successfully."}), 200  
 
-@app.route('/courses/<course_code>', methods=['GET'])
+@course_bp.route('/courses/<course_code>', methods=['GET'])
 @jwt_required()
 def view_course(course_code):
     course = Course.query.filter_by(courseCode=course_code).first()
