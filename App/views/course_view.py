@@ -5,6 +5,8 @@ from flask_jwt_extended import jwt_required
 
 course_bp = Blueprint('courses', __name__)
 
+# create course
+
 @course_bp.route('/courses', methods=['POST'])
 @jwt_required()
 def create_course():
@@ -38,11 +40,14 @@ def create_course():
     
     return jsonify({"message": "Course created successfully."}), 200  
 
+
+# view courses
+
 @course_bp.route('/courses/<course_code>', methods=['GET'])
 @jwt_required()
 def view_course(course_code):
     course = Course.query.filter_by(courseCode=course_code).first()
-    
+
     if not course:
         return jsonify({"error": "Course not found."}), 404
 
@@ -53,5 +58,7 @@ def view_course(course_code):
         "tutor": course.tutor.full_name() if course.tutor else None,
         "ta": course.ta.full_name() if course.ta else None
     }
-    
+
     return jsonify(course_details), 200
+
+
