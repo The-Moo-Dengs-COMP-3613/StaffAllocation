@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required
 
 staff_bp = Blueprint('staff', __name__)
 
+# create Lecturer
 @staff_bp.route('/staff/lecturer', methods=['POST'])
 @jwt_required()
 def create_lecturer():
@@ -17,7 +18,6 @@ def create_lecturer():
     if not title or not first_name or not last_name:
         return jsonify({"error": "Title, first name, and last name are required."}), 400
 
-    # Create Lecturer
     lecturer = Lecturer(title=title, firstName=first_name, lastName=last_name)
 
     db.session.add(lecturer)
@@ -25,7 +25,7 @@ def create_lecturer():
 
     return jsonify({"message": "Lecturer created successfully."}), 201
 
-
+#create tutor
 @staff_bp.route('/staff/tutor', methods=['POST'])
 @jwt_required()
 def create_tutor():
@@ -38,7 +38,6 @@ def create_tutor():
     if not title or not first_name or not last_name:
         return jsonify({"error": "Title, first name, and last name are required."}), 400
 
-    # Create Tutor
     tutor = Tutor(title=title, firstName=first_name, lastName=last_name)
 
     db.session.add(tutor)
@@ -47,6 +46,7 @@ def create_tutor():
     return jsonify({"message": "Tutor created successfully."}), 201
 
 
+#create ta
 @staff_bp.route('/staff/ta', methods=['POST'])
 @jwt_required()
 def create_ta():
@@ -59,7 +59,6 @@ def create_ta():
     if not title or not first_name or not last_name:
         return jsonify({"error": "Title, first name, and last name are required."}), 400
 
-    # Create TA
     ta = TA(title=title, firstName=first_name, lastName=last_name)
 
     db.session.add(ta)
@@ -68,17 +67,16 @@ def create_ta():
     return jsonify({"message": "TA created successfully."}), 201
 
 
+# assign staff to course
 @staff_bp.route('/courses/<course_code>/assign', methods=['PUT'])
 @jwt_required()
 def assign_staff_to_course(course_code):
     data = request.get_json()
     
-    # Get the course by course code
     course = Course.query.filter_by(courseCode=course_code).first()
     if not course:
         return jsonify({"error": "Course not found."}), 200
 
-    # Assign lecturer, tutor, or TA if provided
     lecturer_id = data.get('lecturer_id')
     tutor_id = data.get('tutor_id')
     ta_id = data.get('ta_id')
